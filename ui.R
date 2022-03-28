@@ -34,7 +34,7 @@ dashboardPage(skin="blue",
               shinyjs::useShinyjs(),
               fluidRow(column(2),
                        column(8,
-                              tabBox(width='1000%',
+                              tabBox(width='100%',
                               tabPanel("Anmeldung",
                                        uiOutput("initiate_data"),
                                        uiOutput("check_data"),
@@ -43,11 +43,17 @@ dashboardPage(skin="blue",
                                         fluidRow(column(12, align="center",
                                                         h3("Information über teilnehmende Personen"),
                                                         tableOutput("teilnehmer")
-                               )))),
-                                     # tabPanel("Schlafübersicht",
-                                     #          fluidRow(column(12, align="center",
-                                     #                          h3("Daten"),
-                                     #                          tableOutput("statdata"))))
+                               ))),
+                               tabPanel("Schlafübersicht",
+                                        fluidRow(h3("Informationen über Schlafplätze"), align = "center",
+                                                 column(5),
+                                                 column(7, align="center",
+                                                        imageOutput("grundriss", width = "10%", height = "300"))))),
+                              # tabPanel("Anfahrtsbeschreibung",
+                              #          fluidRow(column(12, align="center",
+                              #                          h3("Daten"),
+                              #                          tableOutput("statdata"))))
+                              
 
               
                        column(2)))))

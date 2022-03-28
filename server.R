@@ -212,11 +212,13 @@ function(input,output, session){
         
         data_name <<- input$name
         
+        data_show <- data.frame(matrix(c(paste0("<h4>", "<b>","Name:","</b>", " ", data_name, "</h4>"),
+                            paste0("<h4>", "<b>","Getränkewünsche:","</b>", " ", data_drink, "</h4>"),
+                            paste0("<h4>", "<b>","Partner:","</b>", " ", data_partner, "</h4>"),
+                            paste0("<h4>", "<b>","Übernachtung:","</b>", " ", data_schlafen, "</h4>"))))
+        
         tagList(h2("Übersicht"),
-                HTML(paste0("<h4>", "<b>","Name:","</b>", " ", data_name, "</h4>")),
-                HTML(paste0("<h4>", "<b>","Getränkewünsche:","</b>", " ", data_drink, "</h4>")),
-                HTML(paste0("<h4>", "<b>","Partner:","</b>", " ", data_partner, "</h4>")),
-                HTML(paste0("<h4>", "<b>","Übernachtung:","</b>", " ", data_schlafen, "</h4>")),
+                renderTable({data_show}),
                 actionButton("change", "Auswahl ändern"))
         
       
@@ -449,6 +451,15 @@ function(input,output, session){
     })
     
   }
+  
+  output$grundriss <- renderImage({
+    filename <- normalizePath(file.path('./www', paste('grundriss', input$n, '.png', sep='')))
+    
+    # Return a list containing the filename and alt text
+    list(src = filename,
+         alt = paste("Grundriss", input$n))
+    
+  }, deleteFile = FALSE)
   
   
 
