@@ -38,16 +38,16 @@ dashboardPage(skin="blue",
                               tabPanel("Anmeldung",
                                        uiOutput("initiate_data"),
                                        uiOutput("check_data"),
-                                       uiOutput("change_data")
-                                     # tabPanel("Teilnehmerübersicht",
-                                     #          fluidRow(column(12, align="center",
-                                     #                          h3("Information über teilnehmen Personen"),
-                                     #                          tableOutput("teilnehmer")
-                                     # ),
+                                       uiOutput("change_data")),
+                              tabPanel("Teilnehmerübersicht",
+                                        fluidRow(column(12, align="center",
+                                                        h3("Information über teilnehmende Personen"),
+                                                        tableOutput("teilnehmer")
+                               )))),
                                      # tabPanel("Schlafübersicht",
                                      #          fluidRow(column(12, align="center",
                                      #                          h3("Daten"),
                                      #                          tableOutput("statdata"))))
 
-              ))),
-                       column(2))))
+              
+                       column(2)))))

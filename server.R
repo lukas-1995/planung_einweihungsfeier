@@ -76,6 +76,7 @@ function(input,output, session){
   waits <- reactiveValues() # reactive to store all reactive variables
   waits$user <- 0
   waits$resetindicator <- 0
+  waits$new <- 0
   data_drink <- NULL
   data_name <- NULL
   data_schlafen <- NULL
@@ -107,7 +108,14 @@ function(input,output, session){
       user <- data.frame(c(user$userid, waits$user))
       names(user) <- "userid"
       saveData(user, "user")
+    } else {
+      daten <- loadData("daten")
+      if (is.element(waits$user, daten$userid)) {
+        waits$resetindicator <- 1
+        data_overview()
+      }
     }
+    update_teilnehmerlist()
     })
   
   
@@ -125,7 +133,7 @@ function(input,output, session){
                    icon = icon("life-ring"),
                    href = "mailto:lukas.f@tutanota.com"))
   })
-  
+
   observe({
     if (waits$resetindicator==0) {
       shinyjs::show("initiate_data")
@@ -163,29 +171,35 @@ function(input,output, session){
     textInput("partner", h3("Ich bringe noch eine weitere Person mit, welche nicht direkt eingeladen wurde:"),
               placeholder = "Bspw. Partner",
               width = "100%"),
-    pickerInput(inputId = "schlafen", 
-                label = h3("Möchtest du bei uns schlafen?"), 
-                choices = c("Ja"="1",
-                            "Nein"="2"),
-                options = pickerOptions(
-                  actionsBox = TRUE, 
-                  size = 10,
-                  title = "Wähle 'Ja' oder 'Nein' aus."), 
-                multiple = F, width = "100%"),
+    radioButtons(inputId = "schlafen", 
+                 label = h3("Möchtest du bei uns schlafen?"), 
+                 choices = c("Ja"="1",
+                             "Nein"="2"),
+                 selected = character(0),
+                 width = "100%"),
+    # pickerInput(inputId = "schlafen", 
+    #             label = h3("Möchtest du bei uns schlafen?"), 
+    #             choices = c("Ja"="1",
+    #                         "Nein"="2"),
+    #             options = pickerOptions(
+    #               actionsBox = TRUE, 
+    #               size = 10,
+    #               title = "Wähle 'Ja' oder 'Nein' aus."), 
+    #             multiple = F, width = "100%"),
     actionButton("confirm", "Bestätigen"))
   })
   
   data_overview <- function(){
     output$check_data <- renderUI({
-      if (nchar(input$name_change)==0) {
+      if (is.null(input$name_change) & waits$new == 1) {
         if (nchar(input$drink)==0) {
-          data_drink <<- "Kein Getränkewunsch."
+          data_drink <<- "Kein Getränkewunsch"
         } else {
           data_drink <<- input$drink
         }
         
         if (nchar(input$partner)==0) {
-          data_partner <<- "Keine weitere Person kommt."
+          data_partner <<- "Keine weitere Person kommt"
         } else {
           data_partner <<- input$partner
         }
@@ -207,25 +221,30 @@ function(input,output, session){
         
       
     } else {
-      if (nchar(input$drink_change)==0) {
-        data_drink <<- "Kein Getränkewunsch."
+      daten <- loadData("daten")
+      
+      line <- which(daten$userid == waits$user)
+      daten_use <- daten[line,]
+      
+      if (nchar(daten_use$drinkwish)==0) {
+        data_drink <<- "Kein Getränkewunsch"
       } else {
-        data_drink <<- input$drink_change
+        data_drink <<- daten_use$drinkwish
       }
       
-      if (nchar(input$partner_change)==0) {
-        data_partner <<- "Keine weitere Person kommt."
+      if (nchar(daten_use$partner)==0) {
+        data_partner <<- "Keine weitere Person kommt"
       } else {
-        data_partner <<- input$partner_change
+        data_partner <<- daten_use$partner
       }
       
-      if (input$schlafen_change == 1) {
+      if (daten_use$sleep == 1) {
         data_schlafen <<- "Ja"
       } else {
         data_schlafen <<- "Nein"
       }
       
-      data_name <<- input$name_change
+      data_name <<- daten_use$name
       
       tagList(h2("Übersicht"),
               HTML(paste0("<h4>", "<b>","Name:","</b>", " ", data_name, "</h4>")),
@@ -263,6 +282,7 @@ function(input,output, session){
     
     req(input$schlafen>0)
     
+    waits$new <- 1
 
     upload_data()
     
@@ -270,36 +290,65 @@ function(input,output, session){
     
     data_overview()
     
+    update_teilnehmerlist()
+    
   })
   
   observeEvent(input$confirm_change,{
-    if (nchar(input$name)==0) {
-      show_alert(
-        title = "Fehlender Name",
-        text = "Du hast keinen Namen eingegeben. Bitte gib einen Namen ein.",
-        type = "error"
-      )
+    
+    if (is.null(input$name_change)) {
+      if (nchar(input$name)==0) {
+        show_alert(
+          title = "Fehlender Name",
+          text = "Du hast keinen Namen eingegeben. Bitte gib einen Namen ein.",
+          type = "error"
+        )
+      }
+      
+      req(nchar(input$name)>0)
+      
+      
+      if (nchar(input$schlafen)==0) {
+        show_alert(
+          title = "Fehlende Angabe zur Übernachtung",
+          text = "Du hast noch keine Präferenz bezüglich deiner Übernachtung eingegeben. Bitte tue das, um Fortzufahren.",
+          type = "error"
+        )
+      }
+      
+      req(input$schlafen>0)
+      
+    } else {
+      if (nchar(input$name_change)==0) {
+        show_alert(
+          title = "Fehlender Name",
+          text = "Du hast keinen Namen eingegeben. Bitte gib einen Namen ein.",
+          type = "error"
+        )
+      }
+      
+      req(nchar(input$name_change)>0)
+      
+      
+      if (nchar(input$schlafen_change)==0) {
+        show_alert(
+          title = "Fehlende Angabe zur Übernachtung",
+          text = "Du hast noch keine Präferenz bezüglich deiner Übernachtung eingegeben. Bitte tue das, um Fortzufahren.",
+          type = "error"
+        )
+      }
+      
+      req(input$schlafen_change>0)
+      
     }
-    
-    req(nchar(input$name)>0)
-    
-    
-    if (nchar(input$schlafen)==0) {
-      show_alert(
-        title = "Fehlende Angabe zur Übernachtung",
-        text = "Du hast noch keine Präferenz bezüglich deiner Übernachtung eingegeben. Bitte tue das, um Fortzufahren.",
-        type = "error"
-      )
-    }
-    
-    req(input$schlafen>0)
-    
-    
+
     upload_data()
     
     waits$resetindicator <- 1
     
     data_overview()
+    
+    update_teilnehmerlist()
     
   })
   
@@ -317,33 +366,60 @@ function(input,output, session){
         textInput("name_change", h3("Mein Name ist:"),
                   value = data_name,
                   width = "100%"),
-        textInput("drink_change", h3("Ich habe einen speziellen Getränkewunsch:"),
-                  value = data_drink,
-                  width = "100%"),
-        textInput("partner_change", h3("Ich bringe noch eine weitere Person mit, welche nicht direkt eingeladen wurde:"),
-                  value = data_partner,
-                  width = "100%"),
-        pickerInput(inputId = "schlafen_change", 
-                    label = h3("Möchtest du bei uns schlafen?"), 
-                    choices = c("Ja"="1",
-                                "Nein"="2"),
-                    selected = num_schlafen,
-                    options = pickerOptions(
-                      actionsBox = TRUE, 
-                      size = 10,
-                      title = "Wähle 'Ja' oder 'Nein' aus."), 
-                    multiple = F, width = "100%"),
+        if (data_drink == "Kein Getränkewunsch") {
+          textInput("drink_change", h3("Ich habe einen speziellen Getränkewunsch:"),
+                    placeholder = "Bspw. heiße Schokolade, Ahoj-Brause, Champagner...",
+                    width = "100%")
+        } else {
+          textInput("drink_change", h3("Ich habe einen speziellen Getränkewunsch:"),
+                    value = data_drink,
+                    width = "100%")
+        },
+        if (data_partner == "Keine weitere Person kommt") {
+          textInput("partner_change", h3("Ich bringe noch eine weitere Person mit, welche nicht direkt eingeladen wurde:"),
+                    placeholder = "Bspw. Partner",
+                    width = "100%")
+        } else {
+          textInput("partner_change", h3("Ich bringe noch eine weitere Person mit, welche nicht direkt eingeladen wurde:"),
+                    value = data_partner,
+                    width = "100%")
+        },
+        radioButtons(inputId = "schlafen_change", 
+                     label = h3("Möchtest du bei uns schlafen?"), 
+                     choices = c("Ja"="1",
+                                 "Nein"="2"),
+                     selected = num_schlafen,
+                     width = "100%"),
+        # pickerInput(inputId = "schlafen_change", 
+        #             label = h3("Möchtest du bei uns schlafen?"), 
+        #             choices = c("Ja"="1",
+        #                         "Nein"="2"),
+        #             selected = num_schlafen,
+        #             options = pickerOptions(
+        #               actionsBox = TRUE, 
+        #               size = 10,
+        #               title = "Wähle 'Ja' oder 'Nein' aus."), 
+        #             multiple = F, width = "100%"),
         actionButton("confirm_change", "Bestätigen"))
     })
   })
   
   upload_data <- function(){
     daten <- loadData("daten")
-    userid_new <- waits$user
-    name_new <- input$name
-    drink_new <- input$drink
-    partner_new <- input$partner
-    schlafen_new <- input$schlafen
+
+    if (is.null(input$name_change)) {
+      userid_new <- waits$user
+      name_new <- input$name
+      drink_new <- input$drink
+      partner_new <- input$partner
+      schlafen_new <- input$schlafen
+    } else {
+      userid_new <- waits$user
+      name_new <- input$name_change
+      drink_new <- input$drink_change
+      partner_new <- input$partner_change
+      schlafen_new <- input$schlafen_change
+    }
     
     daten_new <- daten
     
@@ -361,6 +437,17 @@ function(input,output, session){
       text = paste0("Vielen Dank ", input$name, "! Du hast erfolgreich deine Daten übermittelt!"),
       type = "success"
     )
+  }
+  
+  update_teilnehmerlist <- function(){
+    output$teilnehmer <- renderTable({
+      daten <- loadData("daten")
+      data.frame("Name"=daten$name, 
+                 "Getränkewunsch"=daten$drinkwish,
+                 check.names=FALSE)
+      
+    })
+    
   }
   
   
