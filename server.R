@@ -102,6 +102,13 @@ function(input,output, session){
   showModal(query_modal)
   
   observeEvent(input$run,{
+    if (is.element(input$new_user, user$userid)) {
+      show_alert(
+        title = "Fehlerhafter Nutzername",
+        text = "Dieser Nutzer existiert bereits. Wähle bitte deinen Nutzer aus oder suche dir einen neuen Namen.",
+        type = "error")
+    }
+    req(!is.element(input$new_user, user$userid))
     removeModal()
     waits$user <- ifelse(input$new_user!="", input$new_user, input$user_choose)
     if (waits$user == input$new_user) {
@@ -158,11 +165,49 @@ function(input,output, session){
     }
   })
   
+  observe({
+    if (is.null(input$schlafen)){
+      shinyjs::hide("box")
+    }
+  })
+
+  observeEvent(input$schlafen,{
+    if (!is.null(input$schlafen)) {
+      if (input$schlafen == 1) {
+        shinyjs::show("box")
+      } else {
+        shinyjs::hide("box")
+      }
+    }
+  })
+
+  observeEvent(input$schlafen_change,{
+    if (!is.null(input$schlafen_change)) {
+      print(input$schlafen_change)
+      if (input$schlafen_change == 1) {
+        shinyjs::show("box_change")
+      } else {
+        shinyjs::hide("box_change")
+      }
+    }
+  })
   
-    
+
   output$initiate_data<-renderUI({
+    
+    sleep_data <- loadData("sleep_space")
+    Encoding(sleep_data$bed) <- "UTF-8"
+    
+    sleep_choices <- sleep_data$bed[nchar(sleep_data$userid) == 0]
+    sleep_choices <- sleep_choices[!grepl("(Vorläufig reserviert)", sleep_choices)]
+    
+    equip_data <- loadData("sleep_equip")
+    
+    equip_choices <- equip_data$equip[nchar(equip_data$userid) == 0]
+    
+    
     tagList(
-      textInput("name", h3("Mein Name ist:"),
+    textInput("name", h3("Mein Name ist:"),
               placeholder = "Bei Standardnamen bitte auch mit Nachnamenkürzel",
               width = "100%"),
     textInput("drink", h3("Ich habe einen speziellen Getränkewunsch:"),
@@ -177,6 +222,42 @@ function(input,output, session){
                              "Nein"="2"),
                  selected = character(0),
                  width = "100%"),
+    box(id = "box", width = 12,
+      fluidRow(column(7,
+                      pickerInput(inputId = "bed_choice",
+                                  label = h3("Wo möchtest du schlafen?"),
+                                  choices = sleep_choices,
+                                  options = pickerOptions(
+                                    actionsBox = TRUE,
+                                    size = 10,
+                                    title = "Wähle deinen Schlafplatz aus.",
+                                    multiple = F
+                                  ),
+                                  width = "100%"),
+                      pickerInput(inputId = "equip_choice",
+                                  label = h3("Benötigst du Bettzeug? Bitte antworte hier nur, falls du wirklich nichts mitbringen kannst."),
+                                  choices = equip_choices,
+                                  options = pickerOptions(
+                                    actionsBox = TRUE,
+                                    size = 10,
+                                    title = "Wähle dein Bettzeug aus.",
+                                    multiple = F
+                                  ),
+                                  width = "100%")),
+               column(5,
+                      renderImage({
+                        filename <- normalizePath(file.path('./www', paste('grundriss', input$n, '.png', sep='')))
+                        
+                        # Return a list containing the filename and alt text
+                        list(src = filename,
+                             width = "100%",
+                             height = "100%",
+                             alt = paste("Grundriss", input$n))
+                        
+                      }, deleteFile = FALSE)))
+                    ),
+    
+           
     # pickerInput(inputId = "schlafen", 
     #             label = h3("Möchtest du bei uns schlafen?"), 
     #             choices = c("Ja"="1",
@@ -204,19 +285,36 @@ function(input,output, session){
           data_partner <<- input$partner
         }
         
-        if (input$schlafen == 1) {
-          data_schlafen <<- "Ja"
-        } else {
-          data_schlafen <<- "Nein"
-        }
-        
         data_name <<- input$name
         
+        if (input$schlafen == 1) {
+          data_schlafen <<- "Ja"
+          
+          if (nchar(sleep_use$bed)==0) {
+            data_bed <<- "Kein Schlafplatz benötigt"
+          } else {
+            data_bed <<- input$bed_choice
+          }
+          if (nchar(equip_use$equip)==0) {
+            data_equip <<- "Kein Bettzeug benötigt"
+          } else {
+            data_equip <<- input$equip_choice
+          }
+
+          data_show <- data.frame(matrix(c(paste0("<strong>","Name:","</strong>"),data_name,
+                                           paste0("<strong>","Getränkewünsche:","</strong>"), data_drink,
+                                           paste0("<strong>","Partner:","</strong>"), data_partner,
+                                           paste0("<strong>","Übernachtung:","</strong>"), data_schlafen,
+                                           paste0("<strong>","Übernachtungsplatz:","</strong>"), data_bed,
+                                           paste0("<strong>","Bettzeug:","</strong>"), data_equip), nrow=6, byrow = T))
+        } else {
+          data_schlafen <<- "Nein"
+          data_show <- data.frame(matrix(c(paste0("<strong>","Name:","</strong>"),data_name,
+                                           paste0("<strong>","Getränkewünsche:","</strong>"), data_drink,
+                                           paste0("<strong>","Partner:","</strong>"), data_partner,
+                                           paste0("<strong>","Übernachtung:","</strong>"), data_schlafen), nrow=4, byrow = T))
+        }
         
-        data_show <- data.frame(matrix(c(paste0("<strong>","Name:","</strong>"),data_name,
-                                         paste0("<strong>","Getränkewünsche:","</strong>"), data_drink,
-                                         paste0("<strong>","Partner:","</strong>"), data_partner,
-                                         paste0("<strong>","Übernachtung:","</strong>"), data_schlafen), nrow=4, byrow = T))
         names(data_show) <- NULL
         
         tagList(h2("Übersicht"),
@@ -227,8 +325,22 @@ function(input,output, session){
     } else {
       daten <- loadData("daten")
       
+      sleep_data <- loadData("sleep_space")
+      Encoding(sleep_data$bed) <- "UTF-8"
+      
+      sleep_choices <- sleep_data$bed[nchar(sleep_data$userid) == 0]
+      sleep_choices <- sleep_choices[!grepl("(Vorläufig reserviert)", sleep_choices)]
+      
+      equip_data <- loadData("sleep_equip")
+      
+      equip_choices <- equip_data$equip[nchar(equip_data$userid) == 0]
+      
+      
       line <- which(daten$userid == waits$user)
       daten_use <- daten[line,]
+      
+      sleep_use <- sleep_data[sleep_data$userid == waits$user,]
+      equip_use <- equip_data[equip_data$userid == waits$user,]
       
       if (nchar(daten_use$drinkwish)==0) {
         data_drink <<- "Kein Getränkewunsch"
@@ -242,18 +354,37 @@ function(input,output, session){
         data_partner <<- daten_use$partner
       }
       
+      data_name <- daten_use$name
+      
+      print(daten_use)
+      
       if (daten_use$sleep == 1) {
         data_schlafen <<- "Ja"
+        if (nchar(sleep_use$bed)==0) {
+          data_bed <<- "Kein Schlafplatz benötigt"
+        } else {
+          data_bed <<- sleep_use$bed
+        }
+        if (nchar(equip_use$equip)==0) {
+          data_equip <<- "Kein Bettzeug benötigt"
+        } else {
+          data_equip <<- equip_use$equip
+        }
+        
+        
+        data_show <- data.frame(matrix(c(paste0("<strong>","Name:","</strong>"),data_name,
+                                         paste0("<strong>","Getränkewünsche:","</strong>"), data_drink,
+                                         paste0("<strong>","Partner:","</strong>"), data_partner,
+                                         paste0("<strong>","Übernachtung:","</strong>"), data_schlafen,
+                                         paste0("<strong>","Übernachtungsplatz:","</strong>"), data_bed,
+                                         paste0("<strong>","Bettzeug:","</strong>"), data_equip), nrow=6, byrow = T))
       } else {
         data_schlafen <<- "Nein"
+        data_show <- data.frame(matrix(c(paste0("<strong>","Name:","</strong>"),data_name,
+                                         paste0("<strong>","Getränkewünsche:","</strong>"), data_drink,
+                                         paste0("<strong>","Partner:","</strong>"), data_partner,
+                                         paste0("<strong>","Übernachtung:","</strong>"), data_schlafen), nrow=4, byrow = T))
       }
-      
-      data_name <<- daten_use$name
-      
-      data_show <- data.frame(matrix(c(paste0("<strong>","Name:","</strong>"),data_name,
-                                       paste0("<strong>","Getränkewünsche:","</strong>"), data_drink,
-                                       paste0("<strong>","Partner:","</strong>"), data_partner,
-                                       paste0("<strong>","Übernachtung:","</strong>"), data_schlafen), nrow=4, byrow = T))
       names(data_show) <- NULL
       
       tagList(h2("Übersicht"),
@@ -368,6 +499,18 @@ function(input,output, session){
     }
 
     output$change_data<-renderUI({
+      
+      sleep_data <- loadData("sleep_space")
+      Encoding(sleep_data$bed) <- "UTF-8"
+      
+      sleep_choices <- sleep_data$bed[nchar(sleep_data$userid) == 0]
+      sleep_choices <- sleep_choices[!grepl("(Vorläufig reserviert)", sleep_choices)]
+      
+      equip_data <- loadData("sleep_equip")
+      
+      equip_choices <- equip_data$equip[nchar(equip_data$userid) == 0]
+      
+      
       tagList(
         textInput("name_change", h3("Mein Name ist:"),
                   value = data_name,
@@ -396,6 +539,43 @@ function(input,output, session){
                                  "Nein"="2"),
                      selected = num_schlafen,
                      width = "100%"),
+        box(id = "box_change", width = 12,
+            fluidRow(column(7,
+                            pickerInput(inputId = "bed_choice_change",
+                                        label = h3("Wo möchtest du schlafen?"),
+                                        choices = sleep_choices,
+                                        options = pickerOptions(
+                                          actionsBox = TRUE,
+                                          size = 10,
+                                          title = "Wähle deinen Schlafplatz aus.",
+                                          multiple = F
+                                        ),
+                                        width = "100%"),
+                            pickerInput(inputId = "equip_choice_change",
+                                        label = h3("Benötigst du Bettzeug? Bitte antworte hier nur, falls du wirklich nichts mitbringen kannst."),
+                                        choices = equip_choices,
+                                        options = pickerOptions(
+                                          actionsBox = TRUE,
+                                          size = 10,
+                                          title = "Wähle dein Bettzeug aus.",
+                                          multiple = F
+                                        ),
+                                        width = "100%")),
+                     column(5,
+                            renderImage({
+                              filename <- normalizePath(file.path('./www', paste('grundriss', input$n, '.png', sep='')))
+                              
+                              # Return a list containing the filename and alt text
+                              list(src = filename,
+                                   width = "100%",
+                                   height = "100%",
+                                   alt = paste("Grundriss", input$n))
+                              
+                            }, deleteFile = FALSE)))
+        ),
+        
+        
+        
         # pickerInput(inputId = "schlafen_change", 
         #             label = h3("Möchtest du bei uns schlafen?"), 
         #             choices = c("Ja"="1",
@@ -412,6 +592,17 @@ function(input,output, session){
   
   upload_data <- function(){
     daten <- loadData("daten")
+    
+    sleep_data <- loadData("sleep_space")
+    Encoding(sleep_data$bed) <- "UTF-8"
+    
+    sleep_choices <- sleep_data$bed[nchar(sleep_data$userid) == 0]
+    sleep_choices <- sleep_choices[!grepl("(Vorläufig reserviert)", sleep_choices)]
+    
+    equip_data <- loadData("sleep_equip")
+    
+    equip_choices <- equip_data$equip[nchar(equip_data$userid) == 0]
+    
 
     if (is.null(input$name_change)) {
       userid_new <- waits$user
@@ -419,13 +610,49 @@ function(input,output, session){
       drink_new <- input$drink
       partner_new <- input$partner
       schlafen_new <- input$schlafen
+      bed_choice_new <- input$bed_choice
+      equip_choice_new <- input$equip_choice
     } else {
       userid_new <- waits$user
       name_new <- input$name_change
       drink_new <- input$drink_change
       partner_new <- input$partner_change
       schlafen_new <- input$schlafen_change
+      bed_choice_new <- input$bed_choice_change
+      equip_choice_new <- input$equip_choice_change
+      
     }
+    
+    if (nchar(sleep_data$userid[sleep_data$bed == bed_choice_new])>0) {
+      show_alert(
+        title = "Schlafplatz wurde schon gebucht",
+        text = "Der ausgewählte Schlafplatz wurde gerade von einer anderen Person gebucht. Bitte wähle einen neuen Schlafplatz aus.",
+        type = "error")
+    }
+    req(nchar(sleep_data$userid[sleep_data$bed == bed_choice_new]) == 0)
+    
+    if (nchar(equip_data$userid[equip_data$equip == equip_choice_new])>0) {
+      show_alert(
+        title = "Dieses Bettzeug wurde schon gebucht",
+        text = "Das ausgewählte Bettzeug wurde gerade von einer anderen Person gebucht. Bitte wähle anderes Bettzeug aus.",
+        type = "error")
+    }
+    req(nchar(equip_data$userid[equip_data$equip == equip_choice_new]) == 0)
+    
+    if (is.element(waits$user, sleep_data$userid)) {
+      sleep_data$userid[sleep_data$userid == waits$user] <- ""
+    }
+
+    if (is.element(waits$user, equip_data$userid)) {
+      equip_data$userid[equip_data$userid == waits$user] <- ""
+    }
+    
+    sleep_data$userid[sleep_data$bed == bed_choice_new] <- waits$user
+    equip_data$userid[equip_data$equip == equip_choice_new] <- waits$user
+    
+    saveData(sleep_data, "sleep_space")
+    saveData(equip_data, "sleep_equip")
+    
     
     daten_new <- daten
     
@@ -461,6 +688,8 @@ function(input,output, session){
     
     # Return a list containing the filename and alt text
     list(src = filename,
+         width = "100%",
+         height = "100%",
          alt = paste("Grundriss", input$n))
     
   }, deleteFile = FALSE)
