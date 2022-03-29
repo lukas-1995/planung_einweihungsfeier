@@ -17,11 +17,6 @@ Sys.setenv(LANG = "en")
 Sys.setlocale("LC_ALL","English")
 mise()
 
-# fluidPage(
-#   surveyOutput(df = df,
-#                survey_title = "Hello, World!",
-#                survey_description = "Welcome! This is a demo survey showing off the {shinysurveys} package.")
-# )
 
 dashboardPage(skin="blue",
               dashboardHeader(title = "Einweihungsfeier Planungstool",

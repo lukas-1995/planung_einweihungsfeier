@@ -278,7 +278,6 @@ function(input,output, session){
         } else {
           data_drink <<- input$drink
         }
-        
         if (nchar(input$partner)==0) {
           data_partner <<- "Keine weitere Person kommt"
         } else {
@@ -286,11 +285,9 @@ function(input,output, session){
         }
         
         data_name <<- input$name
-        
         if (input$schlafen == 1) {
           data_schlafen <<- "Ja"
-          
-          if (nchar(sleep_use$bed)==0) {
+          if (nchar(input$bed_choice)==0) {
             data_bed <<- "Kein Schlafplatz benötigt"
           } else {
             data_bed <<- input$bed_choice
@@ -442,10 +439,10 @@ function(input,output, session){
         )
       }
       
-      req(nchar(input$name)>0)
+      req(nchar(input$name_change)>0)
       
       
-      if (nchar(input$schlafen)==0) {
+      if (nchar(input$schlafen_change)==0) {
         show_alert(
           title = "Fehlende Angabe zur Übernachtung",
           text = "Du hast noch keine Präferenz bezüglich deiner Übernachtung eingegeben. Bitte tue das, um Fortzufahren.",
@@ -453,7 +450,7 @@ function(input,output, session){
         )
       }
       
-      req(input$schlafen>0)
+      req(input$schlafen_change>0)
       
     } else {
       if (nchar(input$name_change)==0) {
@@ -597,12 +594,12 @@ function(input,output, session){
     Encoding(sleep_data$bed) <- "UTF-8"
     
     sleep_choices <- sleep_data$bed[nchar(sleep_data$userid) == 0]
-    sleep_choices <- sleep_choices[!grepl("(Vorläufig reserviert)", sleep_choices)]
     
     equip_data <- loadData("sleep_equip")
     
     equip_choices <- equip_data$equip[nchar(equip_data$userid) == 0]
     
+    print(input$name_change)
 
     if (is.null(input$name_change)) {
       userid_new <- waits$user
@@ -622,8 +619,8 @@ function(input,output, session){
       equip_choice_new <- input$equip_choice_change
       
     }
-    
-    if (nchar(sleep_data$userid[sleep_data$bed == bed_choice_new])>0) {
+    print(sleep_choices$userid[sleep_choices$bed == bed_choice_new])
+    if (nchar(sleep_choices$userid[sleep_choices$bed == bed_choice_new])>0) {
       show_alert(
         title = "Schlafplatz wurde schon gebucht",
         text = "Der ausgewählte Schlafplatz wurde gerade von einer anderen Person gebucht. Bitte wähle einen neuen Schlafplatz aus.",
@@ -631,7 +628,8 @@ function(input,output, session){
     }
     req(nchar(sleep_data$userid[sleep_data$bed == bed_choice_new]) == 0)
     
-    if (nchar(equip_data$userid[equip_data$equip == equip_choice_new])>0) {
+    print(equip_choices$userid[equip_choices$equip == equip_choice_new])
+    if (nchar(equip_choices$userid[equip_choices$equip == equip_choice_new])>0) {
       show_alert(
         title = "Dieses Bettzeug wurde schon gebucht",
         text = "Das ausgewählte Bettzeug wurde gerade von einer anderen Person gebucht. Bitte wähle anderes Bettzeug aus.",
