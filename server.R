@@ -212,14 +212,16 @@ function(input,output, session){
         
         data_name <<- input$name
         
-        data_show <- data.frame(matrix(c(paste0("<h4>", "<b>","Name:","</b>", " ", data_name, "</h4>"),
-                            paste0("<h4>", "<b>","Getränkewünsche:","</b>", " ", data_drink, "</h4>"),
-                            paste0("<h4>", "<b>","Partner:","</b>", " ", data_partner, "</h4>"),
-                            paste0("<h4>", "<b>","Übernachtung:","</b>", " ", data_schlafen, "</h4>"))))
+        
+        data_show <- data.frame(matrix(c(paste0("<strong>","Name:","</strong>"),data_name,
+                                         paste0("<strong>","Getränkewünsche:","</strong>"), data_drink,
+                                         paste0("<strong>","Partner:","</strong>"), data_partner,
+                                         paste0("<strong>","Übernachtung:","</strong>"), data_schlafen), nrow=4, byrow = T))
+        names(data_show) <- NULL
         
         tagList(h2("Übersicht"),
-                renderTable({data_show}),
-                actionButton("change", "Auswahl ändern"))
+                renderTable({data_show},sanitize.text.function=function(x){x}),
+                actionButton("change", "Auswahl ändern"))      
         
       
     } else {
@@ -248,13 +250,15 @@ function(input,output, session){
       
       data_name <<- daten_use$name
       
-      tagList(h2("Übersicht"),
-              HTML(paste0("<h4>", "<b>","Name:","</b>", " ", data_name, "</h4>")),
-              HTML(paste0("<h4>", "<b>","Getränkewünsche:","</b>", " ", data_drink, "</h4>")),
-              HTML(paste0("<h4>", "<b>","Partner:","</b>", " ", data_partner, "</h4>")),
-              HTML(paste0("<h4>", "<b>","Übernachtung:","</b>", " ", data_schlafen, "</h4>")),
-              actionButton("change", "Auswahl ändern"))
+      data_show <- data.frame(matrix(c(paste0("<strong>","Name:","</strong>"),data_name,
+                                       paste0("<strong>","Getränkewünsche:","</strong>"), data_drink,
+                                       paste0("<strong>","Partner:","</strong>"), data_partner,
+                                       paste0("<strong>","Übernachtung:","</strong>"), data_schlafen), nrow=4, byrow = T))
+      names(data_show) <- NULL
       
+      tagList(h2("Übersicht"),
+              renderTable({data_show},sanitize.text.function=function(x){x}),
+              actionButton("change", "Auswahl ändern"))      
     
 
       }})
@@ -287,7 +291,7 @@ function(input,output, session){
     waits$new <- 1
 
     upload_data()
-    
+     
     waits$resetindicator <- 1
     
     data_overview()
@@ -461,7 +465,16 @@ function(input,output, session){
     
   }, deleteFile = FALSE)
   
+  output$sleep_booking <- renderTable({
+    sleep_space <- loadData("sleep_space")
+    Encoding(sleep_space$bed) <- "UTF-8"
+    data.frame("Schlafplatz"=sleep_space$bed, 
+               "Person"=sleep_space$userid,
+               check.names=FALSE)
+    
+  })
   
 
 }
+
 
