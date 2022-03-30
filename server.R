@@ -183,7 +183,6 @@ function(input,output, session){
 
   observeEvent(input$schlafen_change,{
     if (!is.null(input$schlafen_change)) {
-      print(input$schlafen_change)
       if (input$schlafen_change == 1) {
         shinyjs::show("box_change")
       } else {
@@ -287,12 +286,12 @@ function(input,output, session){
         data_name <<- input$name
         if (input$schlafen == 1) {
           data_schlafen <<- "Ja"
-          if (nchar(input$bed_choice)==0) {
+          if (length(input$bed_choice)==0) {
             data_bed <<- "Kein Schlafplatz benötigt"
           } else {
             data_bed <<- input$bed_choice
           }
-          if (nchar(equip_use$equip)==0) {
+          if (length(equip_use$equip)==0) {
             data_equip <<- "Kein Bettzeug benötigt"
           } else {
             data_equip <<- input$equip_choice
@@ -357,12 +356,12 @@ function(input,output, session){
       
       if (daten_use$sleep == 1) {
         data_schlafen <<- "Ja"
-        if (nchar(sleep_use$bed)==0) {
+        if (length(sleep_use$bed)==0) {
           data_bed <<- "Kein Schlafplatz benötigt"
         } else {
           data_bed <<- sleep_use$bed
         }
-        if (nchar(equip_use$equip)==0) {
+        if (length(equip_use$equip)==0) {
           data_equip <<- "Kein Bettzeug benötigt"
         } else {
           data_equip <<- equip_use$equip
@@ -593,13 +592,10 @@ function(input,output, session){
     sleep_data <- loadData("sleep_space")
     Encoding(sleep_data$bed) <- "UTF-8"
     
-    sleep_choices <- sleep_data$bed[nchar(sleep_data$userid) == 0]
-    
     equip_data <- loadData("sleep_equip")
     
-    equip_choices <- equip_data$equip[nchar(equip_data$userid) == 0]
-    
     print(input$name_change)
+    print(input$bed_choice)
 
     if (is.null(input$name_change)) {
       userid_new <- waits$user
@@ -619,23 +615,21 @@ function(input,output, session){
       equip_choice_new <- input$equip_choice_change
       
     }
-    print(sleep_choices$userid[sleep_choices$bed == bed_choice_new])
-    if (nchar(sleep_choices$userid[sleep_choices$bed == bed_choice_new])>0) {
+    if (length(sleep_data$userid[sleep_data$bed == bed_choice_new])>0) {
       show_alert(
         title = "Schlafplatz wurde schon gebucht",
         text = "Der ausgewählte Schlafplatz wurde gerade von einer anderen Person gebucht. Bitte wähle einen neuen Schlafplatz aus.",
         type = "error")
     }
-    req(nchar(sleep_data$userid[sleep_data$bed == bed_choice_new]) == 0)
+    req(length(sleep_data$userid[sleep_data$bed == bed_choice_new]) == 0)
     
-    print(equip_choices$userid[equip_choices$equip == equip_choice_new])
-    if (nchar(equip_choices$userid[equip_choices$equip == equip_choice_new])>0) {
+    if (length(equip_data$userid[equip_data$equip == equip_choice_new])>0) {
       show_alert(
         title = "Dieses Bettzeug wurde schon gebucht",
         text = "Das ausgewählte Bettzeug wurde gerade von einer anderen Person gebucht. Bitte wähle anderes Bettzeug aus.",
         type = "error")
     }
-    req(nchar(equip_data$userid[equip_data$equip == equip_choice_new]) == 0)
+    req(length(equip_data$userid[equip_data$equip == equip_choice_new]) == 0)
     
     if (is.element(waits$user, sleep_data$userid)) {
       sleep_data$userid[sleep_data$userid == waits$user] <- ""
