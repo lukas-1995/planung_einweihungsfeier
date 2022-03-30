@@ -87,8 +87,9 @@ dashboardPage(skin="blue",
                                                           könnt, wendet euch einfach an uns."),
                                                        h4("Aufgrund der aktuellen Lage mit hohen Infektionszahlen und positiven Coronafällen an jeder Ecke, findet die Veranstaltung", 
                                                           strong("2G+"), "statt. Wir werden keine Tests überprüfen, aber bitte testet euch möglichst kurz vor der Veranstaltung."),
-                                                       h4("Sollte ihr aufgrund Corona abends nicht teilnehmen können, könnt ihr auch gerne schon nachmittags (gegen 15 Uhr) vorbeikommen und die 
-                                                          Nachmittagssonne auf dem Balkon bei einem Stück Kuchen genießen. Das könnt ihr natürlich auch zusätzlich zur Abendveranstaltung tun."),
+                                                       h4("Solltet ihr aufgrund Corona abends nicht teilnehmen wollen, könnt ihr auch gerne schon nachmittags (gegen 15 Uhr) vorbeikommen und die 
+                                                          Nachmittagssonne auf dem Balkon bei einem Stück Kuchen in kleinerer Runde genießen. Das könnt ihr natürlich auch zusätzlich zur Abendveranstaltung tun,
+                                                          bitte beachtet jedoch, dass wir die Runde nachmittags etwas kleiner halten wollen. Gebt uns einfach kurz Bescheid, falls Interesse daran besteht."),
                                                        h4("Für Essen und Getränke ist gesorgt, ihr dürft aber natürlich gerne noch mehr mitbringen."),
                                                        br(),
                                                        h4("Wir hoffen auf zahlreiche Gäste, gutes Wetter und einen schönen Abend und würden uns freuen, möglichst viele von euch begrüßen zu können."),

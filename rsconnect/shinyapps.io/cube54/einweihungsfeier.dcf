@@ -5,7 +5,7 @@ account: cube54
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 5973212
-bundleId: 5746004
+bundleId: 5746441
 url: https://cube54.shinyapps.io/einweihungsfeier/
-when: 1648660426.59733
-lastSyncTime: 1648660426.59733
+when: 1648666800.53795
+lastSyncTime: 1648666800.53795

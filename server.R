@@ -274,7 +274,7 @@ function(input,output, session){
                                   width = "100%")),
                column(5,
                       renderImage({
-                        filename <- normalizePath(file.path('./www', paste('grundriss', input$n, '.png', sep='')))
+                        filename <- normalizePath(file.path('./www', paste('Grundriss', input$n, '.png', sep='')))
                         
                         # Return a list containing the filename and alt text
                         list(src = filename,
@@ -655,7 +655,7 @@ function(input,output, session){
                                         width = "100%")),
                      column(5,
                             renderImage({
-                              filename <- normalizePath(file.path('./www', paste('grundriss', input$n, '.png', sep='')))
+                              filename <- normalizePath(file.path('./www', paste('Grundriss', input$n, '.png', sep='')))
                               
                               # Return a list containing the filename and alt text
                               list(src = filename,
