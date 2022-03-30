@@ -60,7 +60,7 @@ saveData <- function(data, table) {
   # dbGetQuery(db, sprintf("DROP TABLE %s", table))
   # dbGetQuery(db, query)
   my_dbWriteTable(db, table, data, overwrite = T, row.names = F, col.names = T,
-               field.types = c(.default="varchar(1111)"))
+               field.types = c(.default="varchar(1111)"), fileEncoding="UTF-8")
   dbDisconnect(db)
 }
 
@@ -205,6 +205,12 @@ function(input,output, session){
     }
   })
   
+  observeEvent(input$change,{
+    if (data_schlafen ==2) {
+      shinyjs::hide("box_change")
+    }
+  })
+  
 
   output$initiate_data<-renderUI({
     
@@ -305,7 +311,7 @@ function(input,output, session){
           } else {
             data_bed <<- input$bed_choice
           }
-          if (length(equip_use$equip)==0) {
+          if (length(input$equip_choice)==0) {
             data_equip <<- "Kein Bettzeug benötigt"
           } else {
             data_equip <<- input$equip_choice
@@ -319,6 +325,8 @@ function(input,output, session){
                                            paste0("<strong>","Bettzeug:","</strong>"), data_equip), nrow=6, byrow = T))
         } else {
           data_schlafen <<- "Nein"
+          data_bed <<- NULL
+          data_equip <<- NULL
           data_show <- data.frame(matrix(c(paste0("<strong>","Name:","</strong>"),data_name,
                                            paste0("<strong>","Getränkewünsche:","</strong>"), data_drink,
                                            paste0("<strong>","Partner:","</strong>"), data_partner,
@@ -389,6 +397,8 @@ function(input,output, session){
                                          paste0("<strong>","Bettzeug:","</strong>"), data_equip), nrow=6, byrow = T))
       } else {
         data_schlafen <<- "Nein"
+        data_bed <<- NULL
+        data_equip <<- NULL
         data_show <- data.frame(matrix(c(paste0("<strong>","Name:","</strong>"),data_name,
                                          paste0("<strong>","Getränkewünsche:","</strong>"), data_drink,
                                          paste0("<strong>","Partner:","</strong>"), data_partner,
@@ -428,7 +438,7 @@ function(input,output, session){
     
     req(input$schlafen>0)
     
-    if (nchar(input$schlafen)==1 & length(input$bed_choice) == 0) {
+    if (nchar(input$schlafen)==1 & nchar(input$bed_choice) == 0) {
       show_alert(
         title = "Fehlende Angabe zum Schlafplatz",
         text = "Du hast noch keine Präferenz bezüglich deines Schlafplatzes angegeben. Bitte tue das, um Fortzufahren.",
@@ -436,9 +446,9 @@ function(input,output, session){
       )
     }
     
-    req(length(input$bed_choice) > 0 | nchar(input$schlafen)==2)
+    req(nchar(input$bed_choice) > 0 | nchar(input$schlafen)==2)
     
-    if (nchar(input$schlafen)==1 & length(input$equip_choice) == 0) {
+    if (nchar(input$schlafen)==1 & nchar(input$equip_choice) == 0) {
       show_alert(
         title = "Fehlende Angabe zum Bettzeug",
         text = "Du hast noch keine Präferenz bezüglich deines benötigten Bettzeugs angegeben. Bitte tue das, um Fortzufahren.",
@@ -446,7 +456,7 @@ function(input,output, session){
       )
     }
     
-    req(length(input$equip_choice) > 0 | nchar(input$schlafen)==2)
+    req(nchar(input$equip_choice) > 0 | nchar(input$schlafen)==2)
     
     
     waits$new <- 1
@@ -696,8 +706,8 @@ function(input,output, session){
     print("12")
     
     if (schlafen_new == "2") {
-      bed_choice_new <- character()
-      equip_choice_new <- character()
+      bed_choice_new <- ""
+      equip_choice_new <- ""
     }
 
     if (is.element(waits$user, sleep_data$userid)) {
@@ -714,23 +724,48 @@ function(input,output, session){
     print(sleep_data$bed)
     print(bed_choice_new)
     print(sleep_data$userid[sleep_data$bed == bed_choice_new])
-    if (length(sleep_data$userid[sleep_data$bed == bed_choice_new])>0) {
-      show_alert(
-        title = "Schlafplatz wurde schon gebucht",
-        text = "Der ausgewählte Schlafplatz wurde gerade von einer anderen Person gebucht. Bitte wähle einen neuen Schlafplatz aus.",
-        type = "error")
+    print(length(sleep_data$userid[sleep_data$bed == bed_choice_new]))
+    # if (waits$resetindicator == 0) {
+    if (is.element(bed_choice_new, sleep_data$bed)) {
+      if (nchar(sleep_data$userid[sleep_data$bed == bed_choice_new])>0) {
+        show_alert(
+          title = "Schlafplatz wurde schon gebucht",
+          text = "Der ausgewählte Schlafplatz wurde gerade von einer anderen Person gebucht. Bitte wähle einen neuen Schlafplatz aus.",
+          type = "error")
+      }
+      req(nchar(sleep_data$userid[sleep_data$bed == bed_choice_new]) == 0)
+      print("13")
+      
+      if (nchar(equip_data$userid[equip_data$equip == equip_choice_new])>0) {
+        show_alert(
+          title = "Dieses Bettzeug wurde schon gebucht",
+          text = "Das ausgewählte Bettzeug wurde gerade von einer anderen Person gebucht. Bitte wähle anderes Bettzeug aus.",
+          type = "error")
+      }
+      req(nchar(equip_data$userid[equip_data$equip == equip_choice_new]) == 0)
+      print("14")
     }
-    req(length(sleep_data$userid[sleep_data$bed == bed_choice_new]) == 0)
-    print("13")
-    
-    if (length(equip_data$userid[equip_data$equip == equip_choice_new])>0) {
-      show_alert(
-        title = "Dieses Bettzeug wurde schon gebucht",
-        text = "Das ausgewählte Bettzeug wurde gerade von einer anderen Person gebucht. Bitte wähle anderes Bettzeug aus.",
-        type = "error")
-    }
-    req(length(equip_data$userid[equip_data$equip == equip_choice_new]) == 0)
-    print("14")
+            
+    # } else {
+    #   if (length(sleep_data$userid[sleep_data$bed == bed_choice_new])>0) {
+    #     show_alert(
+    #       title = "Schlafplatz wurde schon gebucht",
+    #       text = "Der ausgewählte Schlafplatz wurde gerade von einer anderen Person gebucht. Bitte wähle einen neuen Schlafplatz aus.",
+    #       type = "error")
+    #   }
+    #   req(length(sleep_data$userid[sleep_data$bed == bed_choice_new]) == 0)
+    #   print("13")
+    #   
+    #   if (length(equip_data$userid[equip_data$equip == equip_choice_new])>0) {
+    #     show_alert(
+    #       title = "Dieses Bettzeug wurde schon gebucht",
+    #       text = "Das ausgewählte Bettzeug wurde gerade von einer anderen Person gebucht. Bitte wähle anderes Bettzeug aus.",
+    #       type = "error")
+    #   }
+    #   req(length(equip_data$userid[equip_data$equip == equip_choice_new]) == 0)
+    #   print("14")
+    #   
+    # }
     
     
     sleep_data$userid[sleep_data$bed == bed_choice_new] <- waits$user
