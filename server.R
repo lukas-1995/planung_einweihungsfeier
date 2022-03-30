@@ -36,6 +36,19 @@ options(mysql = list(
 ))
 databaseName <- "Einweihungsfeier"
 
+my_dbWriteTable <- function(conn, name, value, ..., field.types = NULL) {
+  cl <- match.call(expand.dots = TRUE)
+  cl[[1]] <- substitute(dbWriteTable)
+  if (!is.null(field.types) && ".default" %in% names(field.types)) {
+    othernames <- setdiff(colnames(value), names(field.types))
+    cl$field.types <- c(
+      field.types[ setdiff(names(field.types), ".default") ],
+      setNames(rep(field.types[".default"], length(othernames)), othernames)
+    )
+  }
+  eval.parent(cl)
+}
+
 
 saveData <- function(data, table) {
   # Connect to the database
@@ -46,7 +59,8 @@ saveData <- function(data, table) {
   # Submit the update query and disconnect
   # dbGetQuery(db, sprintf("DROP TABLE %s", table))
   # dbGetQuery(db, query)
-  dbWriteTable(db, table, data, overwrite = T, row.names = F, col.names = T)
+  my_dbWriteTable(db, table, data, overwrite = T, row.names = F, col.names = T,
+               field.types = c(.default="varchar(1111)"))
   dbDisconnect(db)
 }
 
@@ -350,10 +364,9 @@ function(input,output, session){
         data_partner <<- daten_use$partner
       }
       
-      data_name <- daten_use$name
+      data_name <<- daten_use$name
       
-      print(daten_use)
-      
+
       if (daten_use$sleep == 1) {
         data_schlafen <<- "Ja"
         if (length(sleep_use$bed)==0) {
@@ -415,6 +428,27 @@ function(input,output, session){
     
     req(input$schlafen>0)
     
+    if (nchar(input$schlafen)==1 & length(input$bed_choice) == 0) {
+      show_alert(
+        title = "Fehlende Angabe zum Schlafplatz",
+        text = "Du hast noch keine Präferenz bezüglich deines Schlafplatzes angegeben. Bitte tue das, um Fortzufahren.",
+        type = "error"
+      )
+    }
+    
+    req(length(input$bed_choice) > 0 | nchar(input$schlafen)==2)
+    
+    if (nchar(input$schlafen)==1 & length(input$equip_choice) == 0) {
+      show_alert(
+        title = "Fehlende Angabe zum Bettzeug",
+        text = "Du hast noch keine Präferenz bezüglich deines benötigten Bettzeugs angegeben. Bitte tue das, um Fortzufahren.",
+        type = "error"
+      )
+    }
+    
+    req(length(input$equip_choice) > 0 | nchar(input$schlafen)==2)
+    
+    
     waits$new <- 1
 
     upload_data()
@@ -437,7 +471,7 @@ function(input,output, session){
           type = "error"
         )
       }
-      
+      print("1")
       req(nchar(input$name_change)>0)
       
       
@@ -448,8 +482,29 @@ function(input,output, session){
           type = "error"
         )
       }
-      
+      print("2")
       req(input$schlafen_change>0)
+      
+      if (nchar(input$schlafen_change)==1 & length(input$bed_choice_change) == 0) {
+        show_alert(
+          title = "Fehlende Angabe zum Schlafplatz",
+          text = "Du hast noch keine Präferenz bezüglich deines Schlafplatzes angegeben. Bitte tue das, um Fortzufahren.",
+          type = "error"
+        )
+      }
+      
+      req(length(input$bed_choice_change) > 0 | nchar(input$schlafen_change)==2)
+      print("3")
+      if (nchar(input$schlafen_change)==1 & length(input$equip_choice_change) == 0) {
+        show_alert(
+          title = "Fehlende Angabe zum Bettzeug",
+          text = "Du hast noch keine Präferenz bezüglich deines benötigten Bettzeugs angegeben. Bitte tue das, um Fortzufahren.",
+          type = "error"
+        )
+      }
+      
+      req(length(input$equip_choice_change) > 0 | nchar(input$schlafen_change)==2)
+      print("4")
       
     } else {
       if (nchar(input$name_change)==0) {
@@ -461,7 +516,7 @@ function(input,output, session){
       }
       
       req(nchar(input$name_change)>0)
-      
+      print("5")
       
       if (nchar(input$schlafen_change)==0) {
         show_alert(
@@ -472,15 +527,36 @@ function(input,output, session){
       }
       
       req(input$schlafen_change>0)
+      print("6")
+
+      if (nchar(input$schlafen_change)==1 & length(input$bed_choice_change) == 0) {
+        show_alert(
+          title = "Fehlende Angabe zum Schlafplatz",
+          text = "Du hast noch keine Präferenz bezüglich deines Schlafplatzes angegeben. Bitte tue das, um Fortzufahren.",
+          type = "error"
+        )
+      }
       
+      req(length(input$bed_choice_change) > 0 | nchar(input$schlafen_change)==2)
+      print("7")
+      if (nchar(input$schlafen_change)==1 & length(input$equip_choice_change) == 0) {
+        show_alert(
+          title = "Fehlende Angabe zum Bettzeug",
+          text = "Du hast noch keine Präferenz bezüglich deines benötigten Bettzeugs angegeben. Bitte tue das, um Fortzufahren.",
+          type = "error"
+        )
+      }
+      
+      req(length(input$equip_choice_change) > 0 | nchar(input$schlafen_change)==2)
+      print("8")
     }
 
     upload_data()
-    
+    print("9")
     waits$resetindicator <- 1
     
     data_overview()
-    
+    print("10")
     update_teilnehmerlist()
     
   })
@@ -505,6 +581,7 @@ function(input,output, session){
       equip_data <- loadData("sleep_equip")
       
       equip_choices <- equip_data$equip[nchar(equip_data$userid) == 0]
+      
       
       
       tagList(
@@ -539,7 +616,8 @@ function(input,output, session){
             fluidRow(column(7,
                             pickerInput(inputId = "bed_choice_change",
                                         label = h3("Wo möchtest du schlafen?"),
-                                        choices = sleep_choices,
+                                        choices = c(sleep_choices, data_bed),
+                                        selected = data_bed,
                                         options = pickerOptions(
                                           actionsBox = TRUE,
                                           size = 10,
@@ -549,7 +627,8 @@ function(input,output, session){
                                         width = "100%"),
                             pickerInput(inputId = "equip_choice_change",
                                         label = h3("Benötigst du Bettzeug? Bitte antworte hier nur, falls du wirklich nichts mitbringen kannst."),
-                                        choices = equip_choices,
+                                        choices = c(equip_choices, data_equip),
+                                        selected = data_equip,
                                         options = pickerOptions(
                                           actionsBox = TRUE,
                                           size = 10,
@@ -594,9 +673,8 @@ function(input,output, session){
     
     equip_data <- loadData("sleep_equip")
     
-    print(input$name_change)
-    print(input$bed_choice)
-
+    print("11")
+    
     if (is.null(input$name_change)) {
       userid_new <- waits$user
       name_new <- input$name
@@ -615,6 +693,27 @@ function(input,output, session){
       equip_choice_new <- input$equip_choice_change
       
     }
+    print("12")
+    
+    if (schlafen_new == "2") {
+      bed_choice_new <- character()
+      equip_choice_new <- character()
+    }
+
+    if (is.element(waits$user, sleep_data$userid)) {
+      sleep_data$userid[sleep_data$userid == waits$user] <- ""
+    }
+    
+    if (is.element(waits$user, equip_data$userid)) {
+      equip_data$userid[equip_data$userid == waits$user] <- ""
+    }
+    print("15")
+    
+        
+    print(sleep_data$userid)
+    print(sleep_data$bed)
+    print(bed_choice_new)
+    print(sleep_data$userid[sleep_data$bed == bed_choice_new])
     if (length(sleep_data$userid[sleep_data$bed == bed_choice_new])>0) {
       show_alert(
         title = "Schlafplatz wurde schon gebucht",
@@ -622,6 +721,7 @@ function(input,output, session){
         type = "error")
     }
     req(length(sleep_data$userid[sleep_data$bed == bed_choice_new]) == 0)
+    print("13")
     
     if (length(equip_data$userid[equip_data$equip == equip_choice_new])>0) {
       show_alert(
@@ -630,14 +730,8 @@ function(input,output, session){
         type = "error")
     }
     req(length(equip_data$userid[equip_data$equip == equip_choice_new]) == 0)
+    print("14")
     
-    if (is.element(waits$user, sleep_data$userid)) {
-      sleep_data$userid[sleep_data$userid == waits$user] <- ""
-    }
-
-    if (is.element(waits$user, equip_data$userid)) {
-      equip_data$userid[equip_data$userid == waits$user] <- ""
-    }
     
     sleep_data$userid[sleep_data$bed == bed_choice_new] <- waits$user
     equip_data$userid[equip_data$equip == equip_choice_new] <- waits$user
