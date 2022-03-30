@@ -74,5 +74,25 @@ dashboardPage(skin="blue",
                                                          seamless = "seamless",
                                                          src = "https://www.google.com/maps/d/embed?mid=12Y7X60cX0a0L288H0pAv6GKKKa4RlM1x&hl=de&ehbc=2E312F&z=16",
                                                          height = 480, width = "80%"))
-                                                      )))),
+                                                      ))),
+                              tabPanel("Informationen",
+                                       fluidRow(column(12, 
+                                                       h3("Veranstaltungsinformationen", align="center"),
+                                                       h4("Herzlich Willkommen beim Planungsportal für unsere Einweihungsfeier!"),
+                                                       h4("Wir würden gerne mit euch gemeinsam am", strong("Samstag, den 09. April 2022"), "ab", strong("18 Uhr"), "in der", strong("Treburer Str. 14"), "in",
+                                                          strong("60528 Frankfurt"), "feiern. Bitte gebt hier im Tool eure Daten ein, damit wir genauer planen können."),
+                                                       h4("Falls ihr bei uns 
+                                                          übernachten wollt und falls Bedarf besteht, kann nur entweder eine Isomatte oder eine Bettdecke/ ein Schlafsack gewählt werden,
+                                                          damit möglichst viele von euch ein bisschen was abbekommen. Falls ihr gerne übernachten würdet, aber nichts von beidem mitbringen 
+                                                          könnt, wendet euch einfach an uns."),
+                                                       h4("Aufgrund der aktuellen Lage mit hohen Infektionszahlen und positiven Coronafällen an jeder Ecke, findet die Veranstaltung", 
+                                                          strong("2G+"), "statt. Wir werden keine Tests überprüfen, aber bitte testet euch möglichst kurz vor der Veranstaltung."),
+                                                       h4("Sollte ihr aufgrund Corona abends nicht teilnehmen können, könnt ihr auch gerne schon nachmittags (gegen 15 Uhr) vorbeikommen und die 
+                                                          Nachmittagssonne auf dem Balkon bei einem Stück Kuchen genießen. Das könnt ihr natürlich auch zusätzlich zur Abendveranstaltung tun."),
+                                                       h4("Für Essen und Getränke ist gesorgt, ihr dürft aber natürlich gerne noch mehr mitbringen."),
+                                                       br(),
+                                                       h4("Wir hoffen auf zahlreiche Gäste, gutes Wetter und einen schönen Abend und würden uns freuen, möglichst viele von euch begrüßen zu können."),
+                                                       br(),
+                                                       h4("Nina und Lukas")
+                                       )))),
                        column(2)))))

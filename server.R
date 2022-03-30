@@ -102,9 +102,16 @@ function(input,output, session){
   
   query_modal <- modalDialog(
     title = "Anmelden",
-    helpText("Bitte erstelle hier eine Nutzerkonto mit individuellem Anmeldenamen.",
-             "um deine Daten später nochmals bearbeiten zu können.",
-             "Falls du bereits ein Konto angelegt hast, wähle DEINEN bereits erstellten aus."),
+    helpText(h3("Herzlich Willkommen beim Planungsportal für unsere Einweihungsfeier!"),
+             h4("Wir würden gerne mit euch gemeinsam am", strong("Samstag, den 09. April 2022"), "ab", strong("18 Uhr"), "in der", strong("Treburer Str. 14"), "in",
+                strong("60528 Frankfurt"), "feiern."),
+             h4("Bitte gebt hier im Tool eure Daten ein, damit wir genauer planen können. Erstellt dazu ein 
+                Nutzerkonto mit individuellem Anmeldenamen, um eure Daten später nochmals bearbeiten zu können. Falls ihr bereits ein Konto angelegt habt, wählt",
+                strong("EUREN EIGENEN"), "bereits erstellten aus. Weitere Informationen findet ihr im Reiter 'Informationen'."),
+             h4("Wir hoffen auf zahlreiche Gäste, gutes Wetter und einen schönen Abend und würden uns freuen, möglichst viele von euch begrüßen zu können."),
+             br(),
+             h4("Nina und Lukas"),
+             br()),
     selectInput('user_choose','Teilnehmerkonto:', user$userid),
     textInput("new_user", "Neuen Teilnehmer anlegen und einloggen:"),
     easyClose = F,
@@ -113,16 +120,17 @@ function(input,output, session){
     )
   )
   
+  
   showModal(query_modal)
   
   observeEvent(input$run,{
-    if (is.element(input$new_user, user$userid)) {
+    if (is.element(input$new_user, user$userid) & input$new_user != "") {
       show_alert(
         title = "Fehlerhafter Nutzername",
         text = "Dieser Nutzer existiert bereits. Wähle bitte deinen Nutzer aus oder suche dir einen neuen Namen.",
         type = "error")
     }
-    req(!is.element(input$new_user, user$userid))
+    req(!is.element(input$new_user, user$userid) | input$new_user != "")
     removeModal()
     waits$user <- ifelse(input$new_user!="", input$new_user, input$user_choose)
     if (waits$user == input$new_user) {
@@ -137,6 +145,7 @@ function(input,output, session){
       }
     }
     update_teilnehmerlist()
+    sleep_booking_func_update()
     })
   
   
@@ -428,7 +437,7 @@ function(input,output, session){
     req(nchar(input$name)>0)
     
     
-    if (nchar(input$schlafen)==0) {
+    if (is.null(input$schlafen)) {
       show_alert(
         title = "Fehlende Angabe zur Übernachtung",
         text = "Du hast noch keine Präferenz bezüglich deiner Übernachtung eingegeben. Bitte tue das, um Fortzufahren.",
@@ -436,9 +445,11 @@ function(input,output, session){
       )
     }
     
-    req(input$schlafen>0)
-    
-    if (nchar(input$schlafen)==1 & nchar(input$bed_choice) == 0) {
+    req(!is.null(input$schlafen))
+    print(input$schlafen)
+    print(input$bed_choice)
+    print(nchar(input$bed_choice))
+    if (input$schlafen==1 & nchar(input$bed_choice) == 0) {
       show_alert(
         title = "Fehlende Angabe zum Schlafplatz",
         text = "Du hast noch keine Präferenz bezüglich deines Schlafplatzes angegeben. Bitte tue das, um Fortzufahren.",
@@ -446,9 +457,9 @@ function(input,output, session){
       )
     }
     
-    req(nchar(input$bed_choice) > 0 | nchar(input$schlafen)==2)
+    req(nchar(input$bed_choice) > 0 | input$schlafen==2)
     
-    if (nchar(input$schlafen)==1 & nchar(input$equip_choice) == 0) {
+    if (input$schlafen==1 & nchar(input$equip_choice) == 0) {
       show_alert(
         title = "Fehlende Angabe zum Bettzeug",
         text = "Du hast noch keine Präferenz bezüglich deines benötigten Bettzeugs angegeben. Bitte tue das, um Fortzufahren.",
@@ -456,7 +467,7 @@ function(input,output, session){
       )
     }
     
-    req(nchar(input$equip_choice) > 0 | nchar(input$schlafen)==2)
+    req(nchar(input$equip_choice) > 0 | input$schlafen==2)
     
     
     waits$new <- 1
@@ -468,6 +479,7 @@ function(input,output, session){
     data_overview()
     
     update_teilnehmerlist()
+    sleep_booking_func_update()
     
   })
   
@@ -481,21 +493,22 @@ function(input,output, session){
           type = "error"
         )
       }
-      print("1")
       req(nchar(input$name_change)>0)
       
       
-      if (nchar(input$schlafen_change)==0) {
+      if (is.null(input$schlafen_change)) {
         show_alert(
           title = "Fehlende Angabe zur Übernachtung",
           text = "Du hast noch keine Präferenz bezüglich deiner Übernachtung eingegeben. Bitte tue das, um Fortzufahren.",
           type = "error"
         )
       }
-      print("2")
-      req(input$schlafen_change>0)
+      req(!is.null(input$schlafen_change))
       
-      if (nchar(input$schlafen_change)==1 & length(input$bed_choice_change) == 0) {
+      print(input$schlafen_change)
+      print(input$bed_choice_change)
+      print(nchar(input$bed_choice_change))
+      if ((input$schlafen_change)==1 & nchar(input$bed_choice_change) == 0) {
         show_alert(
           title = "Fehlende Angabe zum Schlafplatz",
           text = "Du hast noch keine Präferenz bezüglich deines Schlafplatzes angegeben. Bitte tue das, um Fortzufahren.",
@@ -503,9 +516,8 @@ function(input,output, session){
         )
       }
       
-      req(length(input$bed_choice_change) > 0 | nchar(input$schlafen_change)==2)
-      print("3")
-      if (nchar(input$schlafen_change)==1 & length(input$equip_choice_change) == 0) {
+      req(nchar(input$bed_choice_change) > 0 | (input$schlafen_change)==2)
+      if ((input$schlafen_change)==1 & nchar(input$equip_choice_change) == 0) {
         show_alert(
           title = "Fehlende Angabe zum Bettzeug",
           text = "Du hast noch keine Präferenz bezüglich deines benötigten Bettzeugs angegeben. Bitte tue das, um Fortzufahren.",
@@ -513,8 +525,7 @@ function(input,output, session){
         )
       }
       
-      req(length(input$equip_choice_change) > 0 | nchar(input$schlafen_change)==2)
-      print("4")
+      req(nchar(input$equip_choice_change) > 0 | (input$schlafen_change)==2)
       
     } else {
       if (nchar(input$name_change)==0) {
@@ -526,7 +537,6 @@ function(input,output, session){
       }
       
       req(nchar(input$name_change)>0)
-      print("5")
       
       if (nchar(input$schlafen_change)==0) {
         show_alert(
@@ -537,9 +547,8 @@ function(input,output, session){
       }
       
       req(input$schlafen_change>0)
-      print("6")
-
-      if (nchar(input$schlafen_change)==1 & length(input$bed_choice_change) == 0) {
+  
+      if ((input$schlafen_change)==1 & nchar(input$bed_choice_change) == 0) {
         show_alert(
           title = "Fehlende Angabe zum Schlafplatz",
           text = "Du hast noch keine Präferenz bezüglich deines Schlafplatzes angegeben. Bitte tue das, um Fortzufahren.",
@@ -547,9 +556,8 @@ function(input,output, session){
         )
       }
       
-      req(length(input$bed_choice_change) > 0 | nchar(input$schlafen_change)==2)
-      print("7")
-      if (nchar(input$schlafen_change)==1 & length(input$equip_choice_change) == 0) {
+      req(nchar(input$bed_choice_change) > 0 | (input$schlafen_change)==2)
+      if ((input$schlafen_change)==1 & nchar(input$equip_choice_change) == 0) {
         show_alert(
           title = "Fehlende Angabe zum Bettzeug",
           text = "Du hast noch keine Präferenz bezüglich deines benötigten Bettzeugs angegeben. Bitte tue das, um Fortzufahren.",
@@ -557,17 +565,16 @@ function(input,output, session){
         )
       }
       
-      req(length(input$equip_choice_change) > 0 | nchar(input$schlafen_change)==2)
-      print("8")
+      req(nchar(input$equip_choice_change) > 0 | (input$schlafen_change)==2)
     }
 
     upload_data()
-    print("9")
     waits$resetindicator <- 1
     
     data_overview()
-    print("10")
     update_teilnehmerlist()
+    sleep_booking_func_update()
+    
     
   })
   
@@ -683,8 +690,6 @@ function(input,output, session){
     
     equip_data <- loadData("sleep_equip")
     
-    print("11")
-    
     if (is.null(input$name_change)) {
       userid_new <- waits$user
       name_new <- input$name
@@ -703,7 +708,6 @@ function(input,output, session){
       equip_choice_new <- input$equip_choice_change
       
     }
-    print("12")
     
     if (schlafen_new == "2") {
       bed_choice_new <- ""
@@ -717,14 +721,8 @@ function(input,output, session){
     if (is.element(waits$user, equip_data$userid)) {
       equip_data$userid[equip_data$userid == waits$user] <- ""
     }
-    print("15")
     
         
-    print(sleep_data$userid)
-    print(sleep_data$bed)
-    print(bed_choice_new)
-    print(sleep_data$userid[sleep_data$bed == bed_choice_new])
-    print(length(sleep_data$userid[sleep_data$bed == bed_choice_new]))
     # if (waits$resetindicator == 0) {
     if (is.element(bed_choice_new, sleep_data$bed)) {
       if (nchar(sleep_data$userid[sleep_data$bed == bed_choice_new])>0) {
@@ -734,7 +732,6 @@ function(input,output, session){
           type = "error")
       }
       req(nchar(sleep_data$userid[sleep_data$bed == bed_choice_new]) == 0)
-      print("13")
       
       if (nchar(equip_data$userid[equip_data$equip == equip_choice_new])>0) {
         show_alert(
@@ -743,7 +740,6 @@ function(input,output, session){
           type = "error")
       }
       req(nchar(equip_data$userid[equip_data$equip == equip_choice_new]) == 0)
-      print("14")
     }
             
     # } else {
@@ -805,7 +801,7 @@ function(input,output, session){
   }
   
   output$grundriss <- renderImage({
-    filename <- normalizePath(file.path('./www', paste('grundriss', input$n, '.png', sep='')))
+    filename <- normalizePath(file.path('./www', paste('Grundriss', input$n, '.png', sep='')))
     
     # Return a list containing the filename and alt text
     list(src = filename,
@@ -815,14 +811,19 @@ function(input,output, session){
     
   }, deleteFile = FALSE)
   
-  output$sleep_booking <- renderTable({
-    sleep_space <- loadData("sleep_space")
-    Encoding(sleep_space$bed) <- "UTF-8"
-    data.frame("Schlafplatz"=sleep_space$bed, 
-               "Person"=sleep_space$userid,
-               check.names=FALSE)
-    
-  })
+  sleep_booking_func_update <- function() {
+    output$sleep_booking <- renderTable({
+      sleep_space <- loadData("sleep_space")
+      daten <- loadData("daten")
+      sleep_space <- merge(sleep_space, daten, by = "userid", all.x=T, all.y=F)
+      sleep_space[is.na(sleep_space)] <- ""
+      Encoding(sleep_space$bed) <- "UTF-8"
+      data.frame("Schlafplatz"=sleep_space$bed, 
+                 "Person"=sleep_space$name,
+                 check.names=FALSE)
+    })
+      
+  }
   
 
 }
